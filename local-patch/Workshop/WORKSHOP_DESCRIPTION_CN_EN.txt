@@ -5,10 +5,12 @@
 
 [h2]功能 / Features[/h2]
 [list]
+[*]1.1.1 修复菜单往返重启：主菜单与存档列表不同，退出存档或重载菜单不再强制退出，也不覆盖存档计划。菜单新增 Java 先暂缓，重新进入同一存档可继续；实际开始另一套 Java 配置仍可能重启一次。
+[*]Menu round trips no longer restart the process or overwrite the save plan. New menu Java code is deferred; the same save can be entered again. A different actual game Java selection may still require one restart.
 [*]修复 42.21 的 List 加载接口，恢复 Java 模组发现与加载。
-[*]按模组扫描 JAR、过滤无关类通知并减少重复转换；新获准、更新或停用已加载 Java 模组后要求完整重启。
+[*]按模组扫描 JAR、过滤无关类通知并减少重复转换；实际开始游戏时，新获准、更新或移除所需 Java 代码才触发必要重启。
 [*]1.1.0 内置原 ZombieBuddyCN 译文与中文字库，无需启用汉化 Mod。游戏 CN 时中文，EN 时英文；审批、加载提示、水印、设置与重启提示自动切换。
-[*]Restores Java-mod loading on 42.21, reduces repeated JAR scanning/class transformations, and enforces a full restart when Java-mod selection changes.
+[*]Restores Java-mod loading on 42.21, reduces repeated JAR scanning/class transformations, and requires a full restart for changed Java code when actually starting a game.
 [*]Built-in CN/EN localization follows the game language. No separate ZombieBuddyCN activation is needed.
 [/list]
 

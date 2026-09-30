@@ -18,7 +18,7 @@ public final class RuntimeState {
     private static Set<String> enabled = Set.of(), defaultIds = Set.of();
     private static boolean pending;
     private static String bootProfile = "default", profile = "default";
-    private static boolean firstBatch = true, bootstrapDefault;
+    private static boolean firstBatch = true, menuLoad, gameProfileSeen;
     private static Path ownJar, statePath;
 
     public static synchronized void initialize(Path own) throws IOException {
@@ -63,9 +63,11 @@ public final class RuntimeState {
             Object value = field.get(null);
             profile = value == null ? "default" : value.toString();
         } catch (ReflectiveOperationException error) { throw new IllegalStateException("Cannot resolve mod profile", error); }
-        // On restart for a save-specific selection, startup still loads the default menu profile first.
-        // Defer its Java MAINs once, preserving the requested save plan instead of bouncing forever.
-        bootstrapDefault = firstBatch && profile.equals("default") && !bootProfile.equals("default");
+        // Default-menu reloads must not overwrite an active or pending save selection.
+        // Keep this distinction after returning from a world, not only on the first startup batch.
+        boolean defaultProfile = profile.equals("default");
+        menuLoad = defaultProfile && (gameProfileSeen || !bootProfile.equals("default"));
+        if (!defaultProfile) gameProfileSeen = true;
         firstBatch = false;
         enabled = new HashSet<>(mods);
         selected = new LinkedHashMap<>();
@@ -97,12 +99,17 @@ public final class RuntimeState {
                 packageJars.put(pkg, real);
                 return true;
             }
-            if (bootstrapDefault) {
-                log("menu bootstrap deferred; awaiting profile " + bootProfile + ": " + pkg);
-                return false;
-            }
             String id = modId(real);
             Entry entry = new Entry(id, real.toString(), pkg, hash);
+            if (menuLoad) {
+                // Shared, already-loaded code may serve the menu. Never add/reload other Java code here.
+                if (entry.equals(loaded.get(entry.path()))) {
+                    packageJars.put(pkg, real);
+                    return true;
+                }
+                log("menu Java code deferred until a game selection: " + id + " / " + pkg);
+                return false;
+            }
             selected.put(entry.path(), entry);
             // Even a cache hit reaches this point ONLY through upstream policy/ZBS/ban checks.
             if (!entry.equals(previous) || !eligibleMain.contains(entry.path())) {
@@ -139,8 +146,8 @@ public final class RuntimeState {
     }
 
     public static synchronized void finish() {
-        if (bootstrapDefault) {
-            log("menu bootstrap ready; saved selection retained for " + bootProfile);
+        if (menuLoad) {
+            log("menu ready; current Java environment and saved game selection retained");
             return;
         }
         // Already installed Java hooks cannot be safely unloaded in a running JVM.

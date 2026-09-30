@@ -14,10 +14,13 @@ with zipfile.ZipFile(build/'TestAgent.jar','w') as z:
 sample=build/'Sample.jar'
 with zipfile.ZipFile(sample,'w') as z:
     for f in sorted((classes/'fixture/sample').rglob('*.class')):z.write(f,f.relative_to(classes).as_posix())
+menu_sample=build/'MenuOnly.jar'
+with zipfile.ZipFile(menu_sample,'w') as z:
+    for f in sorted((classes/'fixture/menu').rglob('*.class')):z.write(f,f.relative_to(classes).as_posix())
 host=build/'TestHost.jar'
 with zipfile.ZipFile(host,'w') as z:
     for f in sorted(classes.rglob('*.class')):
-        if 'fixture/sample' not in f.as_posix():z.write(f,f.relative_to(classes).as_posix())
+        if 'fixture/sample' not in f.as_posix() and 'fixture/menu' not in f.as_posix():z.write(f,f.relative_to(classes).as_posix())
 cp+=os.pathsep+str(host)
 state=build/'test-state.properties';state.unlink(missing_ok=True)
 defaults=build/'test-default.txt';defaults.write_text('mods\n{\n mod = Sample,\n}\n')
@@ -42,6 +45,14 @@ for stage in ['unit','prepare','resumed','resumed-loaded','reenabled','updated',
     log=run(stage,base+[stage,str(sample)],42 if stage=='disabled' else 0)
     if stage=='resumed-loaded':
         assert log.count('Transformed: fixture.target.Target (retransformed)')==1,'already-loaded Advice must be transformed once'
+for mode in ['save-plan','default-plan','new-code','removed-code']:
+    state.unlink(missing_ok=True)
+    run('prepare-profile-'+mode,base+['prepare-save',str(sample)])
+    if mode=='default-plan':
+        content=state.read_text(encoding='utf-8').replace('profile=SaveProfile','profile=default')
+        state.write_text(content,encoding='utf-8')
+    command=base.copy();command[command.index('local.zbselective.TestMain')]='local.zbselective.ProfileCycleTest'
+    run('profile-cycle-'+mode,command+[mode,str(sample),str(menu_sample)],42 if mode in ['new-code','removed-code'] else 0)
 for mode in ['lazy','failure']:
     run('network-'+mode,plain+['-cp',cp,'me.zed_0xff.zombie_buddy.NetworkTest',mode])
 # Exercise the existing native Windows launcher unchanged, with the integrated replacement JAR.

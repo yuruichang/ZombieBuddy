@@ -60,6 +60,7 @@ public final class TestMain {
             RuntimeState.finish();
         } else if (args[0].equals("disabled")) {
             check(loaded, "prepared mod initially loads");
+            modSet.set(null, "SaveProfile");
             RuntimeState.begin(new ArrayList<>());
             check(RuntimeState.enabledPreloadIds(List.of("Sample")).isEmpty(), "disabled preload filtered");
             RuntimeState.finish(); // Separate JVM must exit 42 before returning.

@@ -15,7 +15,7 @@ public final class RuntimeState {
     private static final Map<String, Entry> loaded = new LinkedHashMap<>();
     private static final Map<String, Path> packageJars = new ConcurrentHashMap<>();
     private static Map<String, Entry> selected = new LinkedHashMap<>();
-    private static Set<String> enabled = Set.of(), defaultIds = Set.of();
+    private static Set<String> enabled = Set.of(), preloadIds = Set.of();
     private static boolean pending;
     private static String bootProfile = "default", profile = "default";
     private static boolean firstBatch = true, menuLoad, gameProfileSeen;
@@ -34,7 +34,8 @@ public final class RuntimeState {
         }
         Path defaults = Path.of(System.getProperty("zbselective.defaultMods", Path.of(System.getProperty("user.home"),
             "Zomboid", "mods", "default.txt").toString()));
-        defaultIds = readDefaultIds(defaults);
+        preloadIds = bootProfile.equals("default") ? readDefaultIds(defaults)
+            : Set.copyOf(boot.values().stream().map(Entry::id).toList());
         log("startup cache: " + boot.size() + " approved previously selected JAR(s)");
     }
 
@@ -49,7 +50,7 @@ public final class RuntimeState {
     }
 
     public static synchronized boolean shouldPreload(String id, Path jar) {
-        if (!defaultIds.contains(id)) return false;
+        if (!preloadIds.contains(id)) return false;
         try {
             Entry entry = boot.get(jar.toRealPath().toString());
             return entry != null && entry.id().equals(id);
@@ -91,11 +92,10 @@ public final class RuntimeState {
             Entry previous = boot.get(real.toString());
             if (phase.equals("PREMAIN")) {
                 if (previous == null || !previous.pkg().equals(pkg) || !previous.hash().equals(hash)
-                        || !defaultIds.contains(previous.id())) {
+                        || !preloadIds.contains(previous.id())) {
                     log("skip inactive/unprepared preload: " + pkg);
                     return false;
                 }
-                loaded.put(real.toString(), previous);
                 packageJars.put(pkg, real);
                 return true;
             }
@@ -117,12 +117,28 @@ public final class RuntimeState {
                 log("approved; deferred until restart: " + id + " / " + pkg);
                 return false;
             }
-            loaded.put(entry.path(), entry);
             packageJars.put(pkg, real);
             return true;
         } catch (Exception error) {
             throw new IllegalStateException("SelectiveHooks cannot prepare Java mod " + pkg, error);
         }
+    }
+
+    public static synchronized void installed(Path jar, String pkg, String hash, String phase) {
+        if (hash == null) return; // Explicit command-line patches are outside the mod selection.
+        try {
+            Path real = jar.toRealPath();
+            Entry entry = phase.equals("PREMAIN") ? boot.get(real.toString())
+                : new Entry(modId(real), real.toString(), pkg, hash);
+            loaded.put(real.toString(), Objects.requireNonNull(entry));
+        } catch (Exception error) {
+            throw new IllegalStateException("Cannot record installed Java mod " + pkg, error);
+        }
+    }
+
+    public static synchronized boolean isInstalled(Path jar) {
+        try { return loaded.containsKey(jar.toRealPath().toString()); }
+        catch (IOException error) { return false; }
     }
 
     private static String modId(Path jar) throws ReflectiveOperationException {

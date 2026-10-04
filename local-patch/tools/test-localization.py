@@ -1,7 +1,8 @@
 from pathlib import Path
-import subprocess,json,os,sys
+import subprocess,json,os,sys,argparse,hashlib
 sys.stdout.reconfigure(encoding='utf-8')
-root=Path('ZombieBuddyOptimized').resolve();build=root/'build';game=Path('E:/Steam/steamapps/common/ProjectZomboid');java=str(game/'jre64/bin/java.exe')
+parser=argparse.ArgumentParser();parser.add_argument('--game-dir',required=True);args=parser.parse_args()
+root=Path(__file__).resolve().parents[1];build=root/'build';game=Path(args.game_dir).resolve();java=str(game/'jre64/bin/java.exe')
 plain=[java,'-ea','-Xverify:all','-Dfile.encoding=UTF-8','-Dsun.stdout.encoding=UTF-8','-Dsun.stderr.encoding=UTF-8','-Djava.awt.headless=true',f'-Djava.library.path={game}']
 cp=os.pathsep.join(map(str,[build/'TestHost.jar',build/'ZombieBuddy.jar',game/'projectzomboid.jar']))
 results={}
@@ -33,3 +34,4 @@ else:print('PASS native ImGui CJK glyphs')
 if r.returncode:raise RuntimeError('native font glyph validation failed')
 results['native-CJK-font']='passed'
 (build/'localization-report.json').write_text(json.dumps(results,indent=2),encoding='utf-8')
+(build/'localization-inputs.json').write_text(json.dumps({'jar_sha256':hashlib.sha256((build/'ZombieBuddy.jar').read_bytes()).hexdigest()}),encoding='utf-8')

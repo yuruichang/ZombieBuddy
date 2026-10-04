@@ -16,9 +16,10 @@ public final class ProfileCycleTest {
         Class<?> status = Class.forName("me.zed_0xff.zombie_buddy.Loader$JavaModLoadState");
         Constructor<?> ctor = status.getDeclaredConstructors()[0]; ctor.setAccessible(true);
         Class<?> flags = Class.forName("me.zed_0xff.zombie_buddy.ModFlags");
+        Object active = flags.getMethod("with",int.class).invoke(flags.getField("EMPTY").get(null),flags.getField("MF_ACTIVE").getInt(null));
         @SuppressWarnings("unchecked") Map<Path,Object> states = (Map<Path,Object>) statuses.get(null);
         states.put(sample, ctor.newInstance("Sample",sample,flags.getField("EMPTY").get(null),"loaded",sampleHash,true));
-        states.put(menu, ctor.newInstance("MenuOnly",menu,flags.getField("EMPTY").get(null),"loaded",menuHash,true));
+        states.put(menu, ctor.newInstance("MenuOnly",menu,active,"loaded",menuHash,true));
         Class<?> phase = Class.forName("me.zed_0xff.zombie_buddy.Loader$Phase");
         @SuppressWarnings({"unchecked","rawtypes"}) Object main = Enum.valueOf((Class)phase,"MAIN");
         Method load = loader.getDeclaredMethod("loadJar",Path.class,String.class,String.class,phase); load.setAccessible(true);
@@ -39,6 +40,13 @@ public final class ProfileCycleTest {
         for (int i=0; i<3; i++) {
             profile.set(null,"default"); RuntimeState.begin(i==0 ? List.of("MenuOnly") : List.of("Sample","MenuOnly"));
             check(!(Boolean)load.invoke(null,menu,"fixture.menu",menuHash,main), "new menu Java code remains deferred");
+            Method statusFlags = status.getDeclaredMethod("flags"); statusFlags.setAccessible(true);
+            Method statusReason = status.getDeclaredMethod("reason"); statusReason.setAccessible(true);
+            check(!(Boolean)flags.getMethod("has",int.class).invoke(statusFlags.invoke(states.get(menu)),flags.getField("MF_ACTIVE").getInt(null)), "deferred menu code is not active, including stale flags");
+            check(statusReason.invoke(states.get(menu)).toString().startsWith("deferred"), "menu reports its deferred status");
+            check((Boolean)flags.getMethod("has",int.class).invoke(statusFlags.invoke(states.get(sample)),flags.getField("MF_ACTIVE").getInt(null)), "installed save code remains active");
+            Method activeMods = loader.getDeclaredMethod("getActiveJavaMods"); activeMods.setAccessible(true);
+            check(!((List<?>)activeMods.invoke(null)).contains(states.get(menu)), "active API excludes deferred menu code");
             if (i>0) check(RuntimeState.allowJar(sample,"fixture.sample",sampleHash,"MAIN"), "already loaded shared code available to menu");
             RuntimeState.finish();
             check(Arrays.equals(gamePlan,Files.readAllBytes(stateFile)), "menu return never overwrites save plan");

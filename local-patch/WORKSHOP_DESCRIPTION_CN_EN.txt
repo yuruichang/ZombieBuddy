@@ -57,3 +57,7 @@ Validated with 42.21, bundled Java 25 and the native Windows launcher. Approval/
 Close the game and restore the backed-up JAR to roll back. Future higher official versions can replace this patch; this temporary item will be deleted after the author's update.
 原作者 Andrey “Zed” Zaikin，MIT 许可与依赖声明保留；临时维护与汉化：老余。中文字库 Noto Sans SC 采用 OFL。本地修改 JAR 未经原作者签名，但其他 Java 模组的签名和审批未禁用。
 By Andrey “Zed” Zaikin; MIT/dependency notices preserved. Temporary patch/localization: LaoYu. Noto Sans SC uses OFL. This modified JAR is unsigned by the original author; Java-mod approval and signature verification remain enabled.
+
+
+[b]1.1.2：修复存档专用 Java 预加载与待加载状态显示；修正构建和工坊打包流程。[/b]
+[b]1.1.2: Fix save-only Java preloads and deferred status; correct the build and Workshop packaging workflow.[/b]

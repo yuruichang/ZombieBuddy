@@ -1,10 +1,10 @@
 {
-  "name": "ZombieBuddy 2.3.3 LY Optimized 1.1.1",
+  "name": "ZombieBuddy 2.3.3 LY Optimized 1.1.2",
   "upstream_commit": "0ddf161c27848f12d09e74de7fadbea9d50e621d",
   "upstream_url": "https://github.com/zed-0xff/ZombieBuddy",
   "tested_game": "42.21",
   "java": "game JRE 25.0.1",
-  "jar_sha256": "8805fe1900d91567b3c6598919abb53673182c4c5a8fc159042b8750b62bdcf2",
+  "jar_sha256": "dd24cebdbeddc7b4bb49765347fb90ef16457514a3f40422cd1dd8bc969bffd6",
   "upstream_tests": {
     "unitTest": {
       "tests": 97,
@@ -44,6 +44,14 @@
     "profile-cycle-new-code": "passed",
     "prepare-profile-removed-code": "passed",
     "profile-cycle-removed-code": "passed",
+    "prepare-preload-save": "passed",
+    "preload-save": "passed",
+    "prepare-preload-default": "passed",
+    "preload-default": "passed",
+    "prepare-preload-updated": "passed",
+    "preload-updated": "passed",
+    "prepare-preload-invalid-signature": "passed",
+    "preload-invalid-signature": "passed",
     "network-lazy": "passed",
     "network-failure": "passed",
     "native-launcher": "passed",
@@ -77,5 +85,12 @@
     "child-EN": "passed",
     "custom-cachedir": "passed",
     "native-CJK-font": "passed"
+  },
+  "distribution": {
+    "untested-build-rejected": "passed",
+    "stale-regression-rejected": "passed",
+    "source-patch-generated": "passed",
+    "stale-workshop-overridden": "passed",
+    "skip-tests-checksum-and-rejection": "passed"
   }
 }

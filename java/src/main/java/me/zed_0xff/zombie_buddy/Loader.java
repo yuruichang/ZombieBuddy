@@ -455,8 +455,9 @@ public class Loader {
             g_jarLoadStatus.put(entry.canJarPath(), new JavaModLoadState(
                         entry.id(),
                         entry.canJarPath(),
-                        zbsResult.flags().with(MF_PRELOAD).with(MF_ACTIVE),
-                        "preloaded",
+                        local.zbselective.RuntimeState.isInstalled(entry.canJarPath())
+                            ? zbsResult.flags().with(MF_PRELOAD).with(MF_ACTIVE) : zbsResult.flags(),
+                        local.zbselective.RuntimeState.isInstalled(entry.canJarPath()) ? "preloaded" : "not loaded",
                         entry.hash(),
                         null
                         ));
@@ -887,7 +888,7 @@ public class Loader {
                         flags = flags.with(MF_PERSIST);
                     }
                 }
-                if (!shouldSkip) {
+                if (local.zbselective.RuntimeState.isInstalled(canonicalJarPath)) {
                     flags = flags.with(MF_ACTIVE);
                 }
 
@@ -896,12 +897,13 @@ public class Loader {
                 if (prev != null) {
                     flags = flags.merge(prev.flags.getSticky());
                 }
+                if (!local.zbselective.RuntimeState.isInstalled(canonicalJarPath)) flags = flags.without(MF_ACTIVE);
 
                 g_jarLoadStatus.put(canonicalJarPath, new JavaModLoadState(
                     ctx.modId,
                     canonicalJarPath,
                     flags,
-                    shouldSkip ? skipReason.trim() : "loaded",
+                    shouldSkip ? skipReason.trim() : (flags.has(MF_ACTIVE) ? "loaded" : "approved"),
                     ctx.hash,
                     decision
                 ));
@@ -998,12 +1000,27 @@ public class Loader {
             return false;
         }
         if (!local.zbselective.RuntimeState.allowJar(jarPath, packageName, approvedHash, phase.name())) {
+            updateInstalledStatus(jarPath, "deferred until game selection or restart");
             return false;
         }
         if (!addJarToClasspath(jarPath, packageName, approvedHash)) {
+            updateInstalledStatus(jarPath, "not loaded");
             return false;
         }
+        local.zbselective.RuntimeState.installed(jarPath, packageName, approvedHash, phase.name());
+        updateInstalledStatus(jarPath, phase == Phase.PREMAIN ? "preloaded" : "loaded");
         return ApplyPatchesFromPackage(packageName, null, phase);
+    }
+
+    private static void updateInstalledStatus(Path jarPath, String reason) {
+        try {
+            Path real = jarPath.toRealPath();
+            boolean installed = local.zbselective.RuntimeState.isInstalled(real);
+            g_jarLoadStatus.computeIfPresent(real, (path, old) -> new JavaModLoadState(
+                old.id(), path, installed ? old.flags().with(MF_ACTIVE) : old.flags().without(MF_ACTIVE),
+                installed && !reason.equals("loaded") && !reason.equals("preloaded") ? old.reason() : reason,
+                old.sha256(), old.decision()));
+        } catch (IOException error) { Logger.error("Cannot update Java load status: " + error); }
     }
 
     private static final Set<String> _known_mains = new HashSet<>();

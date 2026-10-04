@@ -1,6 +1,6 @@
-# ZombieBuddy 2.3.3 — LY Optimized 1.1.1
+# ZombieBuddy 2.3.3 — LY Optimized 1.1.2
 
-基于官方稳定版 **v2.3.3 / commit `0ddf161c27848f12d09e74de7fadbea9d50e621d`** 的源码修复与优化版本。已使用本机 **Project Zomboid 42.21 / 游戏自带 Java 25** 验证。GitHub master 当前为 3.0.0 alpha，本包不引入该分支的大规模重构。
+基于官方稳定版 **v2.3.3 / commit `0ddf161c27848f12d09e74de7fadbea9d50e621d`** 的源码修复与优化版本。已使用本机 **Project Zomboid 42.21 / 游戏自带 Java 25** 验证。GitHub master 是独立的 3.x 重构分支，本包不引入该分支的大规模重构。
 
 **这是原作者尚未发布新版修复期间制作的临时修复与性能优化包。原作者发布更新后，本创意工坊 Mod 将删除；届时请回到原作者的官方版本。**
 
@@ -85,7 +85,7 @@ JAR 的数字版本保留 **2.3.3**，额外清单字段 `X-Local-Optimized` 和
 
 上游 **142 例**全部通过：97 单元测试、30 真实补丁测试、15 原版对照。一个原测试依赖作者个人 Workshop 目录，改为临时目录内的真实 `workshop.txt` 夹具，未改变生产路径识别逻辑。
 
-另有 **21 个性能/兼容性 JVM 流程**通过，以及 6 组自动语言/字体验证（CN/EN 启动与实时切换、CN/EN 子进程、带空格的自定义缓存路径、原生 ImGui 汉字/Latin 字形）。审批决策与无效签名拒绝在两种语言下均已验证。新增回归覆盖从默认/存档启动计划反复返回不同菜单列表、不执行菜单新增 Java、不覆盖存档缓存、重新进入同一存档，以及实际游戏新增/移除 Java 仍要求重启。原有专项包括：新模组延迟执行、重启后 Advice/MethodDelegation、已加载类只转换一次、正则目标、Lua API 暴露、更新与重新启用、停用退出、存档列表衔接、42.21 真实加载入口、惰性 HTTP、初始化失败回退以及原 `zbNative.dll` 启动。JVM 验证启用 `-Xverify:all`。
+另有 **29 个性能/兼容性 JVM 流程**通过，以及 6 组自动语言/字体验证（CN/EN 启动与实时切换、CN/EN 子进程、带空格的自定义缓存路径、原生 ImGui 汉字/Latin 字形）。审批决策与无效签名拒绝在两种语言下均已验证。新增回归覆盖从默认/存档启动计划反复返回不同菜单列表、不执行菜单新增 Java、不覆盖存档缓存、重新进入同一存档，以及实际游戏新增/移除 Java 仍要求重启。原有专项包括：新模组延迟执行、重启后 Advice/MethodDelegation、已加载类只转换一次、正则目标、Lua API 暴露、更新与重新启用、停用退出、存档列表衔接、42.21 真实加载入口、惰性 HTTP、初始化失败回退以及原 `zbNative.dll` 启动。JVM 验证启用 `-Xverify:all`。
 
 没有进入完整游戏世界或进行全部模组组合和多人实机验收；未测量完整启动耗时，不承诺提速百分比。本包修复框架入口，不能自动修复其他 Java 模组对新版游戏 API 的不兼容。
 
@@ -100,3 +100,11 @@ JAR 的数字版本保留 **2.3.3**，额外清单字段 `X-Local-Optimized` 和
 原作者为 Andrey “Zed” Zaikin，原 MIT 许可与依赖声明保留。汉化译文沿用老余原 ZombieBuddyCN 项目，字体的 OFL 许可随 JAR 分发。源代码改动见 `source-changes.patch`，完整修改源码另有源码包。`build.ps1` 使用原 Gradle 构建、运行原测试及专项回归，不执行签名任务。需要 JDK 25、Python 与用于编译和验证的游戏 `projectzomboid.jar`。
 
 相关来源：[上游稳定版源码](https://github.com/zed-0xff/ZombieBuddy/tree/v2.3.3)、[HTTP 初始化故障报告 #46](https://github.com/zed-0xff/ZombieBuddy/issues/46)、[官方 2.3.3 发布](https://github.com/zed-0xff/ZombieBuddy/releases/tag/v2.3.3)。
+
+## 1.1.2 审查修正
+
+存档启动计划中的预加载模组在完整重启后执行 PreMain，即使它未在主菜单列表中启用；默认配置启动仍只预加载默认列表中的模组。待加载计划不替代原签名、授权和实际加载检查。暂缓执行的模组显示为待加载，只有本进程已安装的 Java 代码保留活动状态。
+
+从仓库根目录或其他工作目录均可执行 `local-patch/build.ps1 -GameDir "游戏安装目录"`。可用 `-OutputDir` 指定 Gradle 输出目录。脚本生成 JAR 与 SHA-256，运行上游、29 个 JVM 流程、6 组汉化/字体和安装备份检查。`-SkipTests` 仅生成 JAR 与校验文件，不能用于发行打包。构建成功后执行 `python local-patch/tools/package.py`，自动生成源码补丁，并将经过验证的 JAR 和 SHA-256 放入所有发行 ZIP，包括工坊包；不会依赖暂存目录内旧的 JAR。每份回归报告绑定实际验证的 JAR 哈希。发行打包需要 Git checkout 和官方稳定基线提交；建议直接从 fork 克隆构建。源码 ZIP 同时提供已生成的源码补丁。
+
+本轮还通过干净 Git 克隆构建、任意工作目录、带空格的自定义游戏/输出目录，以及 4 项发行流程检查：拒绝未测试构建、拒绝过期回归报告、自动生成缺失补丁、覆盖旧工坊 JAR。可运行 `python local-patch/tools/test-distribution.py` 复查发行流程。

@@ -62,3 +62,7 @@ description=原作者 Andrey “Zed” Zaikin，MIT 许可与依赖声明保留�
 description=By Andrey “Zed” Zaikin; MIT/dependency notices preserved. Temporary patch/localization: LaoYu. Noto Sans SC uses OFL. This modified JAR is unsigned by the original author; Java-mod approval and signature verification remain enabled.
 tags=Build 42
 visibility=public
+
+description=
+description=[b]1.1.2：修复存档专用 Java 预加载与待加载状态显示；修正构建和工坊打包流程。[/b]
+description=[b]1.1.2: Fix save-only Java preloads and deferred status; correct the build and Workshop packaging workflow.[/b]
